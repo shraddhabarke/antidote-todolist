@@ -2,7 +2,7 @@
 This is a sample application to demonstrate how to build applications that use Antidote as backend database.
 
 * setup - scripts and docker files for running two instances of Antidote and two instances of the jave application
-* bookstore - source of the application
+* application - source of the application
 
 ### What you need
 * An IDE for java development

@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 import eu.antidotedb.client.AntidoteClient;
 import eu.antidotedb.client.Host;
@@ -22,6 +23,11 @@ public class Testcommands {
 		return (new User().createUser(currentSession, email));
 	}
 	
+	@Command
+	public List<BoardId> listboards() {
+		return (new Board().listBoards());
+	}
+
 	@Command
 	public BoardId createboard(String name) {
 		return (new Board().createBoard(currentSession, name));
@@ -63,6 +69,15 @@ public class Testcommands {
 		new Task().updateDueDate(currentSession, task_id, dueDate);
 	}
 	
+	@Command
+	public void movetask(TaskId task_id, ColumnId newcolumn_id) {
+		new Task().moveTask(currentSession, task_id, newcolumn_id);
+	}
+
+	@Command
+	public void deletetask(TaskId task_id) {
+		new Task().deleteTask(currentSession, task_id);
+	}
 	@Command //connect antidote
 	public String connect(String host, int port){
 		currentSession = new AntidoteClient(new Host(host, port));
