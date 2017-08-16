@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="application/src/main/java"/>
+	<classpathentry kind="lib" path="application/build/libs/application.jar"/>
+	<classpathentry kind="lib" path="application/build/libs/bookstore.jar"/>
+	<classpathentry kind="lib" path="application/gradle/wrapper/gradle-wrapper.jar"/>
+	<classpathentry kind="lib" path="application/lib/asg.cliche-110413.jar"/>
+	<classpathentry kind="output" path="application/build/classes/main"/>
+</classpath>
