@@ -2,7 +2,6 @@ package common;
 
 import java.text.DateFormat;
 import java.util.Date;
-
 import com.google.protobuf.ByteString;
 import common.Column.ColumnField;
 import eu.antidotedb.client.AntidoteClient;
@@ -27,7 +26,7 @@ public class Task {
 	}
 
 	enum TaskField {
-		task_name, due_date, column_id
+		task_name, column_id, due_date
 	}
 	
 	static class TaskFieldCoder implements ValueCoder<TaskField> {
@@ -92,7 +91,7 @@ public class Task {
 		MapRef<ColumnField> oldcolumn = new Column().columnMap(oldcolumn_id);
 		tasks(oldcolumn).remove(tx, task_id);
 		MapRef<ColumnField> newcolumn = new Column().columnMap(newcolumn_id);
-		tasks(newcolumn).add(client.noTransaction(), task_id);
+		tasks(newcolumn).add(tx, task_id);
 		tx.commitTransaction();
 		}
 	}
@@ -106,5 +105,13 @@ public class Task {
 
 	private RegisterRef<String> taskname(MapRef<TaskField> task) {
 		return task.register(TaskField.task_name);
+	}
+	
+	public TaskMap getTask(AntidoteClient client, TaskId task_id) {
+		MapRef<TaskField> task = new Task().taskMap(task_id);
+		String taskname = task.register(TaskField.task_name).read(client.noTransaction());
+		ColumnId columnid = task.register(TaskField.column_id, new ColumnId.Coder()).read(client.noTransaction());
+		String duedate = task.register(TaskField.due_date).read(client.noTransaction());
+		return new TaskMap(taskname, columnid, duedate);
 	}
 }

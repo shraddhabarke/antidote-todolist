@@ -1,5 +1,8 @@
 package common;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.protobuf.ByteString;
 
 import common.Board.BoardField;
@@ -16,7 +19,6 @@ public class Column {
 		Bucket<ColumnId> cbucket = Bucket.create("columnbucket", new ColumnId.Coder());
 	
 		public ColumnId column_id = null;
-		
 		public Column(ColumnId column_id) {
 			this.column_id = column_id;
 		}
@@ -86,6 +88,19 @@ public class Column {
 
 		private RegisterRef<String> columnname(MapRef<ColumnField> column) {
 			return column.register(ColumnField.column_name);
+		}
+		
+		public ColumnMap getColumn(AntidoteClient client, ColumnId column_id) {
+			List<TaskMap> task_list = new ArrayList<TaskMap>();
+			MapRef<ColumnField> column = new Column().columnMap(column_id);
+			String columnname = column.register(ColumnField.column_name).read(client.noTransaction());
+			BoardId boardid = column.register(ColumnField.board_id, new BoardId.Coder()).read(client.noTransaction());
+			List<TaskId> taskid_list = column.set(ColumnField.tasks, new TaskId.Coder()).read(client.noTransaction());
+			for(int i = 0; i < taskid_list.size(); i++) {
+				TaskMap task = new Task().getTask(client, taskid_list.get(i));
+				task_list.add(task);
+			}
+			return new ColumnMap(columnname, boardid, taskid_list, task_list);
 		}
 	}
 

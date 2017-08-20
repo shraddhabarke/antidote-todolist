@@ -3,6 +3,7 @@ package common;
 import java.util.ArrayList;
 import java.util.List;
 import com.google.protobuf.ByteString;
+
 import eu.antidotedb.client.AntidoteClient;
 import eu.antidotedb.client.Bucket;
 import eu.antidotedb.client.MapRef;
@@ -59,4 +60,17 @@ public class Board {
 	public List<BoardId> listBoards(){
 		return list_boards;
 	}
+	
+	public BoardMap getBoard(AntidoteClient client, BoardId board_id) {
+		List<ColumnMap> column_list = new ArrayList<ColumnMap>();
+		MapRef<BoardField> board = new Board().boardMap(board_id);
+		String boardname = board.register(BoardField.board_name).read(client.noTransaction());
+		List<ColumnId> columnid_list = board.set(BoardField.columns, new ColumnId.Coder()).read(client.noTransaction());
+		for(int i = 0; i < columnid_list.size(); i++) {
+			ColumnMap column = new Column().getColumn(client, columnid_list.get(i));
+			column_list.add(column);
+		}
+		return new BoardMap(boardname, columnid_list, column_list);
+	}
+
 }

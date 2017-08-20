@@ -13,6 +13,10 @@ public class Testcommands {
 	
 	AntidoteClient currentSession;
 	
+	Board board = new Board();
+	Column column = new Column();
+	Task task = new Task();
+	
 	@Command
 	public String hello() {
 	    return "Hello, World!";
@@ -25,58 +29,73 @@ public class Testcommands {
 	
 	@Command
 	public List<BoardId> listboards() {
-		return (new Board().listBoards());
+		return board.listBoards();
 	}
 
 	@Command
 	public BoardId createboard(String name) {
-		return (new Board().createBoard(currentSession, name));
+		return board.createBoard(currentSession, name);
 	}
 
 	@Command
 	public void renameboard(BoardId board_id, String newName) {
-		 new Board().renameBoard(currentSession, board_id, newName);
+		 board.renameBoard(currentSession, board_id, newName);
 	}
 
 	@Command
 	public ColumnId addcolumn(BoardId board_id, String name) {
-		return (new Column().addColumn(currentSession, board_id, name));
+		return column.addColumn(currentSession, board_id, name);
 	}
 
 	@Command
 	public void renamecolumn(ColumnId column_id, String newName) {
-		new Column().renameColumn(currentSession, column_id, newName);
+		column.renameColumn(currentSession, column_id, newName);
 	}
 
 	@Command
 	public void deletecolumn(ColumnId column_id) {
-		new Column().deleteColumn(currentSession, column_id);
+		column.deleteColumn(currentSession, column_id);
 
 	}
 
 	@Command 
 	public TaskId createtask(ColumnId column_id, String title) {
-		return (new Task().createTask(currentSession, column_id, title));
+		return task.createTask(currentSession, column_id, title);
 	}
 	
 	@Command
 	public void updatetitle(TaskId task_id, String newTitle) {
-		new Task().updateTitle(currentSession, task_id, newTitle);
+		task.updateTitle(currentSession, task_id, newTitle);
 	}	
 	
 	@Command
-	public void updatedueDate(TaskId task_id, Date dueDate ) {
-		new Task().updateDueDate(currentSession, task_id, dueDate);
+	public void updateduedate(TaskId task_id, Date dueDate ) {
+		task.updateDueDate(currentSession, task_id, dueDate);
 	}
 	
 	@Command
 	public void movetask(TaskId task_id, ColumnId newcolumn_id) {
-		new Task().moveTask(currentSession, task_id, newcolumn_id);
+		task.moveTask(currentSession, task_id, newcolumn_id);
 	}
 
 	@Command
 	public void deletetask(TaskId task_id) {
-		new Task().deleteTask(currentSession, task_id);
+		task.deleteTask(currentSession, task_id);
+	}
+	
+	@Command
+	public BoardMap getboard(BoardId board_id) {
+		return board.getBoard(currentSession, board_id);
+	}
+	
+	@Command
+	public ColumnMap getcolumn(ColumnId column_id) {
+		return column.getColumn(currentSession, column_id);
+	}
+
+	@Command
+	public TaskMap gettask(TaskId task_id) {
+		return task.getTask(currentSession, task_id);
 	}
 	@Command //connect antidote
 	public String connect(String host, int port){
