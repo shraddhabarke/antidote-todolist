@@ -97,9 +97,10 @@ public class Testcommands {
 	public TaskMap gettask(TaskId task_id) {
 		return task.getTask(currentSession, task_id);
 	}
+
 	@Command //connect antidote
 	public String connect(String host, int port){
-	    currentSession = new AntidoteClient(new InetSocketAddress("127.0.0.1", 8087));
+	    currentSession = new AntidoteClient(new InetSocketAddress(host, port));
 		return "Connected to " + host+":"+port;
 	}
 	

@@ -11,16 +11,16 @@ import eu.antidotedb.client.Bucket;
 import eu.antidotedb.client.MapKey;
 import eu.antidotedb.client.RegisterKey;
 import eu.antidotedb.client.SetKey;
+import eu.antidotedb.client.MapKey.MapReadResult;
 
 
 public class Column {
 	
 		private static final RegisterKey<String> namefield = register("Name");
 		private static final RegisterKey<BoardId> boardidfield = register("BoardId", new BoardId.Coder());
-		private static final SetKey<ColumnId> columnidfield = set("ColumnId", new ColumnId.Coder());
-		private static final SetKey<TaskId> taskidfield = set("TaskId", new TaskId.Coder());
+		public static final SetKey<TaskId> taskidfield = set("TaskId", new TaskId.Coder());
 
-		Bucket cbucket = Bucket.bucket("columnbucket");
+		Bucket cbucket = Bucket.bucket("bucket");
 	
 		public ColumnId column_id = null;
 		public Column(ColumnId column_id) {
@@ -35,13 +35,13 @@ public class Column {
 		}
 	
 		public ColumnId addColumn(AntidoteClient client, BoardId board_id, String name) {
-			MapKey board = new Board().boardMap(board_id);
+			Board boardobj = new Board();
+			MapKey board = boardobj.boardMap(board_id);
 			ColumnId column_id = ColumnId.generateId();
 			MapKey column = columnMap(column_id);
 			cbucket.update(client.noTransaction(), column.update(namefield.assign(name)));
 			cbucket.update(client.noTransaction(), column.update(boardidfield.assign(board_id)));
-			cbucket.update(client.noTransaction(), board.update(columnidfield.add(column_id)));
-			// the bucket issue
+			cbucket.update(client.noTransaction(), board.update(Board.columnidfield.add(column_id)));
 			return column_id;
 		}
 
@@ -55,17 +55,20 @@ public class Column {
 		}
 		
 		public void deleteColumn(AntidoteClient client, ColumnId column_id) {
-			MapKey column = columnMap(column_id);	
-			
-			//Also remove the column_id from board map
+			MapKey column = columnMap(column_id);
+			MapReadResult columnmap = cbucket.read(client.noTransaction(), column);
+			BoardId boardid = columnmap.get(boardidfield);
+			MapKey board = new Board().boardMap(boardid);
+			cbucket.update(client.noTransaction(), board.update(Board.columnidfield.remove(column_id)));
 		}
 
 		public ColumnMap getColumn(AntidoteClient client, ColumnId column_id) {
 			List<TaskMap> task_list = new ArrayList<TaskMap>();
 			MapKey column = columnMap(column_id);
-			String columnname = cbucket.read(client.noTransaction(), namefield);
-			BoardId boardid = cbucket.read(client.noTransaction(), boardidfield);
-			List<TaskId> taskid_list = cbucket.read(client.noTransaction(), taskidfield);
+			MapReadResult columnmap = cbucket.read(client.noTransaction(), column);
+			String columnname = columnmap.get(namefield);
+			BoardId boardid = columnmap.get(boardidfield);
+			List<TaskId> taskid_list = columnmap.get(taskidfield);
 			for(int i = 0; i < taskid_list.size(); i++) {
 				TaskMap task = new Task().getTask(client, taskid_list.get(i));
 				task_list.add(task);

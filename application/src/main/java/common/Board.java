@@ -16,10 +16,10 @@ import eu.antidotedb.client.SetKey;
 public class Board {
 	
 	private static final RegisterKey<String> namefield = register("Name");
-	private static final SetKey<ColumnId> columnidfield = set("ColumnId", new ColumnId.Coder());
+	public static final SetKey<ColumnId> columnidfield = set("ColumnId", new ColumnId.Coder());
 
 	
-	Bucket cbucket = Bucket.bucket("taskbucket");
+	Bucket cbucket = Bucket.bucket("bucket");
 	public static List<BoardId> list_boards = new ArrayList<BoardId>();
 	
 	public MapKey boardMap(BoardId board_id) {

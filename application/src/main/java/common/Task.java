@@ -2,7 +2,6 @@ package common;
 
 import static eu.antidotedb.client.Key.map_aw;
 import static eu.antidotedb.client.Key.register;
-import static eu.antidotedb.client.Key.set;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -11,7 +10,6 @@ import eu.antidotedb.client.Bucket;
 import eu.antidotedb.client.InteractiveTransaction;
 import eu.antidotedb.client.MapKey;
 import eu.antidotedb.client.RegisterKey;
-import eu.antidotedb.client.SetKey;
 import eu.antidotedb.client.MapKey.MapReadResult;
 
 public class Task {
@@ -19,9 +17,8 @@ public class Task {
 	private static final RegisterKey<String> titlefield = register("Title");
 	private static final RegisterKey<String> duedatefield = register("DueDate");
 	private static final RegisterKey<ColumnId> columnidfield = register("ColumnId", new ColumnId.Coder());
-	private static final SetKey<TaskId> taskidfield = set("TaskId", new TaskId.Coder());
 
-	Bucket cbucket = Bucket.bucket("taskbucket");
+	Bucket cbucket = Bucket.bucket("bucket");
 
 	public TaskId task_id = null;
 	
@@ -38,11 +35,13 @@ public class Task {
 
 	
 	public TaskId createTask(AntidoteClient client, ColumnId column_id, String title) {
-		MapKey column = new Column().columnMap(column_id);
+		Column columnobj = new Column();
+		MapKey column = columnobj.columnMap(column_id);
 		TaskId task_id = TaskId.generateId();
 		MapKey task = taskMap(task_id);
 		cbucket.update(client.noTransaction(), task.update(titlefield.assign(title)));
-		cbucket.update(client.noTransaction(), column.update(columnidfield.assign(column_id)));
+		cbucket.update(client.noTransaction(), task.update(columnidfield.assign(column_id)));
+		cbucket.update(client.noTransaction(), column.update(Column.taskidfield.add(task_id)));
 		// the bucket issue
 		return task_id;
 	}
@@ -61,6 +60,10 @@ public class Task {
 
 	public void deleteTask(AntidoteClient client, TaskId task_id) {
 		MapKey task = taskMap(task_id);
+		MapReadResult taskmap = cbucket.read(client.noTransaction(), task);
+		ColumnId columnid = taskmap.get(columnidfield);
+		MapKey column = new Column().columnMap(columnid);
+		cbucket.update(client.noTransaction(), column.update(Column.taskidfield.remove(task_id)));
 	}
 	
 	public void addUser(TaskId task_id, UserId user) {
@@ -73,9 +76,9 @@ public class Task {
 		try (InteractiveTransaction tx = client.startTransaction()) {
 		ColumnId oldcolumn_id = cbucket.read(tx, columnidfield);
 		MapKey oldcolumn = new Column().columnMap(oldcolumn_id);
-		cbucket.update(client.noTransaction(), oldcolumn.update(taskidfield.remove(task_id)));
+		cbucket.update(client.noTransaction(), oldcolumn.update(Column.taskidfield.remove(task_id)));
 		MapKey newcolumn = new Column().columnMap(newcolumn_id);
-		cbucket.update(client.noTransaction(), newcolumn.update(taskidfield.add(task_id)));
+		cbucket.update(client.noTransaction(), newcolumn.update(Column.taskidfield.add(task_id)));
 		tx.commitTransaction();
 		}
 	}
