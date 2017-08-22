@@ -12,21 +12,20 @@ public class ColumnId {
 		id = uniqueID;
 	}
 
-	public static ColumnId getid() {
+	public static ColumnId generateId() {
 		String uniqueID = UUID.randomUUID().toString();
 		return new ColumnId(uniqueID);
 	}
 	
+	public String getId() {
+		return id;
+	}
+
 	public String toString() {
 		return id;
 	}
 
 	static class Coder implements ValueCoder<ColumnId> {
-
-		@Override
-		public ColumnId cast(Object o) {
-			return (ColumnId) o;
-		}
 
 		@Override
 		public ColumnId decode(ByteString b) {

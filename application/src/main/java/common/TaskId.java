@@ -13,9 +13,13 @@ public class TaskId {
 		id = uniqueID;
 	}
 	
-	public static TaskId getid() {
+	public static TaskId generateId() {
 		String uniqueID = UUID.randomUUID().toString();
 		return new TaskId(uniqueID);
+	}
+	
+	public String getId() {
+		return id;
 	}
 	
 	public String toString() {
@@ -23,11 +27,6 @@ public class TaskId {
 	}
 
 	static class Coder implements ValueCoder<TaskId> {
-
-		@Override
-		public TaskId cast(Object o) {
-			return (TaskId) o;
-		}
 
 		@Override
 		public TaskId decode(ByteString b) {

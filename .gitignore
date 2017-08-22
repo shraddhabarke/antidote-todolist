@@ -1,0 +1,5 @@
+application/.gradle/
+application/build
+.classpath
+.project
+application/.settings

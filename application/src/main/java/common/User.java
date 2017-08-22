@@ -1,16 +1,17 @@
 package common;
 
-import com.google.protobuf.ByteString;
-
 import eu.antidotedb.client.AntidoteClient;
 import eu.antidotedb.client.Bucket;
-import eu.antidotedb.client.MapRef;
-import eu.antidotedb.client.ValueCoder;
+import static eu.antidotedb.client.Key.*;
+import eu.antidotedb.client.MapKey;
+import eu.antidotedb.client.RegisterKey;
 
 public class User {
+	private static final RegisterKey<String> emailfield = register("Email");
+
 	public UserId user_id = null;
 	
-	Bucket<UserId> cbucket = Bucket.create("userbucket", new UserId.Coder());
+	Bucket cbucket = Bucket.bucket("userbucket");
 
 	public User(UserId user_id) {
 		this.user_id = user_id;
@@ -19,37 +20,14 @@ public class User {
 	public User() {
 	}
 
-	enum UserField {
-		user_email, tasks
-	}
-	
-	static class UserFieldCoder implements ValueCoder<UserField> {
-
-		@Override
-		public UserField cast(Object o) {
-			return (UserField) o;
-		}
-
-		@Override
-		public UserField decode(ByteString b) {
-			return UserField.valueOf(b.toStringUtf8());
-		}
-
-		@Override
-		public ByteString encode(UserField f) {
-			return ByteString.copyFromUtf8(f.name());
-		}
-		
-	}
-	
-	public MapRef<UserField> userMap(UserId user_id) {
-		return cbucket.map_aw(user_id, new UserFieldCoder());
+	public MapKey userMap(UserId user_id) {
+		return map_aw(user_id.getId());
 	}
 
 	public UserId createUser(AntidoteClient client, String email) {
-		UserId user_id = UserId.getid();
-		MapRef<UserField> user = userMap(user_id);
-		user.register(UserField.user_email).set(client.noTransaction(), email);
+		UserId user_id = UserId.generateId();
+		MapKey user = userMap(user_id);
+		cbucket.update(client.noTransaction(), user.update(emailfield.assign(email)));
 		return user_id;
 	}
 }

@@ -12,21 +12,19 @@ public class BoardId {
 		id = uniqueID;
 	}
 
-	public static BoardId getid() {
+	public static BoardId generateId() {
 		String uniqueID = UUID.randomUUID().toString();
 		return new BoardId(uniqueID);
 	}
 	
+	public String getId() {
+		return id;
+	}
 	public String toString() {
 		return id;
 	}
 	
 	static class Coder implements ValueCoder<BoardId> {
-
-		@Override
-		public BoardId cast(Object o) {
-			return (BoardId) o;
-		}
 
 		@Override
 		public BoardId decode(ByteString b) {

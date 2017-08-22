@@ -1,60 +1,42 @@
 package common;
 
+import static eu.antidotedb.client.Key.map_aw;
+import static eu.antidotedb.client.Key.register;
+import static eu.antidotedb.client.Key.set;
+
 import java.util.ArrayList;
 import java.util.List;
-import com.google.protobuf.ByteString;
-
 import eu.antidotedb.client.AntidoteClient;
 import eu.antidotedb.client.Bucket;
-import eu.antidotedb.client.MapRef;
-import eu.antidotedb.client.RegisterRef;
-import eu.antidotedb.client.ValueCoder;
+import eu.antidotedb.client.MapKey;
+import eu.antidotedb.client.MapKey.MapReadResult;
+import eu.antidotedb.client.RegisterKey;
+import eu.antidotedb.client.SetKey;
 
 public class Board {
 	
-	Bucket<BoardId> cbucket = Bucket.create("boardbucket", new BoardId.Coder());
+	private static final RegisterKey<String> namefield = register("Name");
+	private static final SetKey<ColumnId> columnidfield = set("ColumnId", new ColumnId.Coder());
+
+	
+	Bucket cbucket = Bucket.bucket("taskbucket");
 	public static List<BoardId> list_boards = new ArrayList<BoardId>();
-	enum BoardField {
-		board_name, columns
-	}
 	
-	static class BoardFieldCoder implements ValueCoder<BoardField> {
-
-		@Override
-		public BoardField cast(Object o) {
-			return (BoardField) o;
-		}
-
-		@Override
-		public BoardField decode(ByteString b) {
-			return BoardField.valueOf(b.toStringUtf8());
-		}
-
-		@Override
-		public ByteString encode(BoardField f) {
-			return ByteString.copyFromUtf8(f.name());
-		}	
-	}
-	
-	public MapRef<BoardField> boardMap(BoardId board_id) {
-		return cbucket.map_aw(board_id, new BoardFieldCoder());
-	}
+	public MapKey boardMap(BoardId board_id) {
+		return map_aw(board_id.getId());
+	}	
 	
 	public BoardId createBoard(AntidoteClient client, String name) {
-		BoardId board_id = BoardId.getid();
-		MapRef<BoardField> board = boardMap(board_id);
-		boardname(board).set(client.noTransaction(), name);
+		BoardId board_id = BoardId.generateId();
+		MapKey board = boardMap(board_id);
+		cbucket.update(client.noTransaction(), board.update(namefield.assign(name)));
 		list_boards.add(board_id);
 		return board_id;
 	}
 
-	private RegisterRef<String> boardname(MapRef<BoardField> board) {
-		return board.register(BoardField.board_name);
-	}
-	
 	public void renameBoard(AntidoteClient client, BoardId board_id , String newName) {
-		MapRef<BoardField> board = boardMap(board_id);
-		boardname(board).set(client.noTransaction(), newName);
+		MapKey board = boardMap(board_id);
+		cbucket.update(client.noTransaction(), board.update(namefield.assign(newName)));
 	}	
 
 	public List<BoardId> listBoards(){
@@ -63,9 +45,10 @@ public class Board {
 	
 	public BoardMap getBoard(AntidoteClient client, BoardId board_id) {
 		List<ColumnMap> column_list = new ArrayList<ColumnMap>();
-		MapRef<BoardField> board = new Board().boardMap(board_id);
-		String boardname = board.register(BoardField.board_name).read(client.noTransaction());
-		List<ColumnId> columnid_list = board.set(BoardField.columns, new ColumnId.Coder()).read(client.noTransaction());
+		MapKey board = boardMap(board_id);
+		MapReadResult boardmap = cbucket.read(client.noTransaction(), board);
+		String boardname = boardmap.get(namefield);
+		List<ColumnId> columnid_list = boardmap.get(columnidfield);
 		for(int i = 0; i < columnid_list.size(); i++) {
 			ColumnMap column = new Column().getColumn(client, columnid_list.get(i));
 			column_list.add(column);

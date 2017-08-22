@@ -1,9 +1,9 @@
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.List;
 
 import eu.antidotedb.client.AntidoteClient;
-import eu.antidotedb.client.Host;
 
 import asg.cliche.Command;
 import asg.cliche.ShellFactory;
@@ -99,7 +99,7 @@ public class Testcommands {
 	}
 	@Command //connect antidote
 	public String connect(String host, int port){
-		currentSession = new AntidoteClient(new Host(host, port));
+	    currentSession = new AntidoteClient(new InetSocketAddress("127.0.0.1", 8087));
 		return "Connected to " + host+":"+port;
 	}
 	

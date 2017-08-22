@@ -12,18 +12,17 @@ public class UserId {
 	public UserId(String uniqueID) {
 		id = uniqueID;
 	}
+	
+	public String getId() {
+		return id;
+	}
 
-	public static UserId getid() {
+	public static UserId generateId() {
 		String uniqueID = UUID.randomUUID().toString();
 		return new UserId(uniqueID);
 	}
 	
 	static class Coder implements ValueCoder<UserId> {
-
-		@Override
-		public UserId cast(Object o) {
-			return (UserId) o;
-		}
 
 		@Override
 		public UserId decode(ByteString b) {

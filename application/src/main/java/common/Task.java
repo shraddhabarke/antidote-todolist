@@ -1,20 +1,27 @@
 package common;
 
+import static eu.antidotedb.client.Key.map_aw;
+import static eu.antidotedb.client.Key.register;
+import static eu.antidotedb.client.Key.set;
+
 import java.text.DateFormat;
 import java.util.Date;
-import com.google.protobuf.ByteString;
-import common.Column.ColumnField;
 import eu.antidotedb.client.AntidoteClient;
 import eu.antidotedb.client.Bucket;
 import eu.antidotedb.client.InteractiveTransaction;
-import eu.antidotedb.client.MapRef;
-import eu.antidotedb.client.RegisterRef;
-import eu.antidotedb.client.SetRef;
-import eu.antidotedb.client.ValueCoder;
+import eu.antidotedb.client.MapKey;
+import eu.antidotedb.client.RegisterKey;
+import eu.antidotedb.client.SetKey;
+import eu.antidotedb.client.MapKey.MapReadResult;
 
 public class Task {
 	
-	Bucket<TaskId> cbucket = Bucket.create("taskbucket", new TaskId.Coder());
+	private static final RegisterKey<String> titlefield = register("Title");
+	private static final RegisterKey<String> duedatefield = register("DueDate");
+	private static final RegisterKey<ColumnId> columnidfield = register("ColumnId", new ColumnId.Coder());
+	private static final SetKey<TaskId> taskidfield = set("TaskId", new TaskId.Coder());
+
+	Bucket cbucket = Bucket.bucket("taskbucket");
 
 	public TaskId task_id = null;
 	
@@ -24,94 +31,61 @@ public class Task {
 	
 	public Task() {
 	}
-
-	enum TaskField {
-		task_name, column_id, due_date
-	}
-	
-	static class TaskFieldCoder implements ValueCoder<TaskField> {
-
-		@Override
-		public TaskField cast(Object o) {
-			return (TaskField) o;
-		}
-
-		@Override
-		public TaskField decode(ByteString b) {
-			return TaskField.valueOf(b.toStringUtf8());
-		}
-
-		@Override
-		public ByteString encode(TaskField f) {
-			return ByteString.copyFromUtf8(f.name());
-		}
 		
+	public MapKey taskMap(TaskId task_id) {
+		return map_aw(task_id.getId());
 	}
-		
-	public MapRef<TaskField> taskMap(TaskId task_id) {
-		return cbucket.map_aw(task_id, new TaskFieldCoder());
-	}
+
 	
 	public TaskId createTask(AntidoteClient client, ColumnId column_id, String title) {
-		MapRef<ColumnField> column = new Column().columnMap(column_id);
-		TaskId task_id = TaskId.getid();
-		tasks(column).add(client.noTransaction(), task_id);
-		MapRef<TaskField> task = taskMap(task_id);
-		taskname(task).set(client.noTransaction(), title);
-		columnid(task).set(client.noTransaction(), column_id);
-		return task_id;	
-		}
+		MapKey column = new Column().columnMap(column_id);
+		TaskId task_id = TaskId.generateId();
+		MapKey task = taskMap(task_id);
+		cbucket.update(client.noTransaction(), task.update(titlefield.assign(title)));
+		cbucket.update(client.noTransaction(), column.update(columnidfield.assign(column_id)));
+		// the bucket issue
+		return task_id;
+	}
 
 	public void updateTitle(AntidoteClient client, TaskId task_id, String newTitle) {
-		MapRef<TaskField> task = taskMap(task_id);
-		taskname(task).set(client.noTransaction(), newTitle);
+		MapKey task = taskMap(task_id);
+		cbucket.update(client.noTransaction(), task.update(titlefield.assign(newTitle)));
 	}
 
 	public void updateDueDate(AntidoteClient client, TaskId task_id, Date dueDate ) {
-		MapRef<TaskField> task = taskMap(task_id);
+		MapKey task = taskMap(task_id);
 		DateFormat df = DateFormat.getDateInstance();
 		String dueDateString = df.format(dueDate);
-		task.register(TaskField.due_date).set(client.noTransaction(), dueDateString);
-		}
+		cbucket.update(client.noTransaction(), task.update(duedatefield.assign(dueDateString)));
+	}
 
 	public void deleteTask(AntidoteClient client, TaskId task_id) {
-		MapRef<TaskField> task = taskMap(task_id);
-		task.reset(client.noTransaction());
+		MapKey task = taskMap(task_id);
 	}
 	
 	public void addUser(TaskId task_id, UserId user) {
 	}
 
 	public void moveTask(AntidoteClient client, TaskId task_id, ColumnId newcolumn_id) {
-		MapRef<TaskField> task = taskMap(task_id);
-		columnid(task).set(client.noTransaction(), newcolumn_id);
+		MapKey task = taskMap(task_id);
+		cbucket.update(client.noTransaction(), task.update(columnidfield.assign(newcolumn_id)));
 
 		try (InteractiveTransaction tx = client.startTransaction()) {
-		ColumnId oldcolumn_id = columnid(task).read(tx);
-		MapRef<ColumnField> oldcolumn = new Column().columnMap(oldcolumn_id);
-		tasks(oldcolumn).remove(tx, task_id);
-		MapRef<ColumnField> newcolumn = new Column().columnMap(newcolumn_id);
-		tasks(newcolumn).add(tx, task_id);
+		ColumnId oldcolumn_id = cbucket.read(tx, columnidfield);
+		MapKey oldcolumn = new Column().columnMap(oldcolumn_id);
+		cbucket.update(client.noTransaction(), oldcolumn.update(taskidfield.remove(task_id)));
+		MapKey newcolumn = new Column().columnMap(newcolumn_id);
+		cbucket.update(client.noTransaction(), newcolumn.update(taskidfield.add(task_id)));
 		tx.commitTransaction();
 		}
 	}
 
-	private SetRef<TaskId> tasks(MapRef<ColumnField> oldcolumn) {
-		return oldcolumn.set(ColumnField.tasks, new TaskId.Coder());
-	}
-	private RegisterRef<ColumnId> columnid(MapRef<TaskField> task) {
-		return task.register(TaskField.column_id, new ColumnId.Coder());
-	}
-
-	private RegisterRef<String> taskname(MapRef<TaskField> task) {
-		return task.register(TaskField.task_name);
-	}
-	
 	public TaskMap getTask(AntidoteClient client, TaskId task_id) {
-		MapRef<TaskField> task = new Task().taskMap(task_id);
-		String taskname = task.register(TaskField.task_name).read(client.noTransaction());
-		ColumnId columnid = task.register(TaskField.column_id, new ColumnId.Coder()).read(client.noTransaction());
-		String duedate = task.register(TaskField.due_date).read(client.noTransaction());
-		return new TaskMap(taskname, columnid, duedate);
+		MapKey task = taskMap(task_id);
+		MapReadResult taskmap = cbucket.read(client.noTransaction(), task);
+		String tasktitle = taskmap.get(titlefield);
+		ColumnId columnid = taskmap.get(columnidfield);
+		String duedate = taskmap.get(duedatefield);
+		return new TaskMap(tasktitle, columnid, duedate);
 	}
 }
