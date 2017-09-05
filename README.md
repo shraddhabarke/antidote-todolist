@@ -1,10 +1,10 @@
 
-This is a sample application to demonstrate how to build applications that use Antidote as backend database.
+A collaborative todo list application to demonstrate how to build applications that use Antidote as backend database.
 
-* setup - scripts and docker files for running two instances of Antidote and two instances of the jave application
+* setup - scripts and docker files for running two instances of Antidote and two instances of the Java application
 * application - source of the application
 
-### What you need
+### Requirements
 * An IDE for java development
 * [Gradle](https://gradle.org/) build tool
 * [Docker](https://docs.docker.com/engine/installation/)
@@ -12,7 +12,7 @@ This is a sample application to demonstrate how to build applications that use A
 
 
 ### Build Bookstore application
-In bookstore/
+In application/
 * ./gradlew build
 
 ### Starting antidote nodes
