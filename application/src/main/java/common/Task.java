@@ -42,7 +42,6 @@ public class Task {
 		cbucket.update(client.noTransaction(), task.update(titlefield.assign(title)));
 		cbucket.update(client.noTransaction(), task.update(columnidfield.assign(column_id)));
 		cbucket.update(client.noTransaction(), column.update(Column.taskidfield.add(task_id)));
-		// the bucket issue
 		return task_id;
 	}
 
@@ -76,9 +75,9 @@ public class Task {
 		try (InteractiveTransaction tx = client.startTransaction()) {
 		ColumnId oldcolumn_id = cbucket.read(tx, columnidfield);
 		MapKey oldcolumn = new Column().columnMap(oldcolumn_id);
-		cbucket.update(client.noTransaction(), oldcolumn.update(Column.taskidfield.remove(task_id)));
+		cbucket.update(tx, oldcolumn.update(Column.taskidfield.remove(task_id)));
 		MapKey newcolumn = new Column().columnMap(newcolumn_id);
-		cbucket.update(client.noTransaction(), newcolumn.update(Column.taskidfield.add(task_id)));
+		cbucket.update(tx, newcolumn.update(Column.taskidfield.add(task_id)));
 		tx.commitTransaction();
 		}
 	}
