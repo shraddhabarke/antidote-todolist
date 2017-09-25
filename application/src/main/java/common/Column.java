@@ -15,57 +15,52 @@ import eu.antidotedb.client.MapKey.MapReadResult;
 
 
 public class Column {
-	
+
 		private static final RegisterKey<String> namefield = register("Name");
 		private static final RegisterKey<BoardId> boardidfield = register("BoardId", new BoardId.Coder());
 		public static final SetKey<TaskId> taskidfield = set("TaskId", new TaskId.Coder());
 
 		Bucket cbucket = Bucket.bucket("bucket");
-	
+
 		public ColumnId column_id = null;
 		public Column(ColumnId column_id) {
 			this.column_id = column_id;
 		}
-		
+
 		public Column() {
 		}
 
-		public MapKey columnMap(ColumnId column_id) {
+		public static MapKey columnMap(ColumnId column_id) {
 			return map_aw(column_id.getId());
 		}
-	
+
 		public ColumnId addColumn(AntidoteClient client, BoardId board_id, String name) {
-			Board boardobj = new Board();
-			MapKey board = boardobj.boardMap(board_id);
+			MapKey boardKey = Board.boardMap(board_id);
 			ColumnId column_id = ColumnId.generateId();
-			MapKey column = columnMap(column_id);
-			cbucket.update(client.noTransaction(), column.update(namefield.assign(name)));
-			cbucket.update(client.noTransaction(), column.update(boardidfield.assign(board_id)));
-			cbucket.update(client.noTransaction(), board.update(Board.columnidfield.add(column_id)));
+			MapKey columnKey = columnMap(column_id);
+			cbucket.update(client.noTransaction(), columnKey.update(namefield.assign(name)));
+			cbucket.update(client.noTransaction(), columnKey.update(boardidfield.assign(board_id)));
+			cbucket.update(client.noTransaction(), boardKey.update(Board.columnidfield.add(column_id)));
 			return column_id;
 		}
 
 		public void renameColumn(AntidoteClient client, ColumnId column_id, String newName) {
-			MapKey column = columnMap(column_id);
-			cbucket.update(client.noTransaction(), column.update(namefield.assign(newName)));
+			MapKey columnKey = columnMap(column_id);
+			cbucket.update(client.noTransaction(), columnKey.update(namefield.assign(newName)));
 		}
-		
-		public void moveColumn(AntidoteClient client, ColumnId column_id, ColumnId column_id_left, ColumnId column_id_right) {
-			
-		}
-		
+
 		public void deleteColumn(AntidoteClient client, ColumnId column_id) {
-			MapKey column = columnMap(column_id);
-			MapReadResult columnmap = cbucket.read(client.noTransaction(), column);
+			MapKey columnKey = columnMap(column_id);
+			MapReadResult columnmap = cbucket.read(client.noTransaction(), columnKey);
 			BoardId boardid = columnmap.get(boardidfield);
-			MapKey board = new Board().boardMap(boardid);
-			cbucket.update(client.noTransaction(), board.update(Board.columnidfield.remove(column_id)));
+			MapKey boardKey = Board.boardMap(boardid);
+			cbucket.update(client.noTransaction(), boardKey.update(Board.columnidfield.remove(column_id)));
 		}
 
 		public ColumnMap getColumn(AntidoteClient client, ColumnId column_id) {
 			List<TaskMap> task_list = new ArrayList<TaskMap>();
-			MapKey column = columnMap(column_id);
-			MapReadResult columnmap = cbucket.read(client.noTransaction(), column);
+			MapKey columnKey = columnMap(column_id);
+			MapReadResult columnmap = cbucket.read(client.noTransaction(), columnKey);
 			String columnname = columnmap.get(namefield);
 			BoardId boardid = columnmap.get(boardidfield);
 			List<TaskId> taskid_list = columnmap.get(taskidfield);
@@ -76,4 +71,3 @@ public class Column {
 			return new ColumnMap(columnname, boardid, taskid_list, task_list);
 		}
 	}
-
