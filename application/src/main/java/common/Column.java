@@ -1,6 +1,6 @@
 package common;
 
-import static eu.antidotedb.client.Key.map_aw;
+import static eu.antidotedb.client.Key.map_rr;
 import static eu.antidotedb.client.Key.register;
 import static eu.antidotedb.client.Key.set;
 
@@ -31,7 +31,7 @@ public class Column {
 		}
 
 		public static MapKey columnMap(ColumnId column_id) {
-			return map_aw(column_id.getId());
+			return map_rr(column_id.getId());
 		}
 
 		public ColumnId addColumn(AntidoteClient client, BoardId board_id, String name) {
