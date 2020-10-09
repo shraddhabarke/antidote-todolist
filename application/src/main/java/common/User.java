@@ -2,7 +2,8 @@ package common;
 
 import eu.antidotedb.client.AntidoteClient;
 import eu.antidotedb.client.Bucket;
-import static eu.antidotedb.client.Key.*;
+import static eu.antidotedb.client.Key.register;
+import static eu.antidotedb.client.Key.map_rr;
 import eu.antidotedb.client.MapKey;
 import eu.antidotedb.client.RegisterKey;
 
@@ -21,7 +22,7 @@ public class User {
 	}
 
 	public MapKey userMap(UserId user_id) {
-		return map_aw(user_id.getId());
+		return map_rr(user_id.getId());
 	}
 
 	public UserId createUser(AntidoteClient client, String email) {

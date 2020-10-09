@@ -1,6 +1,6 @@
 package common;
 
-import static eu.antidotedb.client.Key.map_aw;
+import static eu.antidotedb.client.Key.map_rr;
 import static eu.antidotedb.client.Key.register;
 
 import java.text.DateFormat;
@@ -30,7 +30,7 @@ public class Task {
 	}
 
 	public static MapKey taskMap(TaskId task_id) {
-		return map_aw(task_id.getId());
+		return map_rr(task_id.getId());
 	}
 
 	public TaskId createTask(AntidoteClient client, ColumnId column_id, String title) {
